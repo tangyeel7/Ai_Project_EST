@@ -138,7 +138,20 @@ def main():
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
                 sock.connect(("192.0.2.1", 1))
                 lan_ip = sock.getsockname()[0]
-            print(f"On a phone on the same Wi-Fi: http://{lan_ip}:{args.port}")
+            phone_url = f"http://{lan_ip}:{args.port}"
+            print(f"On a phone on the same Wi-Fi: {phone_url}")
+            try:
+                import qrcode
+                qr = qrcode.QRCode(border=2)
+                qr.add_data(phone_url)
+                qr.make(fit=True)
+                print("\nScan this QR code with your phone camera:")
+                qr.print_ascii(invert=True)
+                qr_path = ROOT / "data" / "phone_qr.png"
+                qr_path.parent.mkdir(parents=True, exist_ok=True)
+                qr.make_image(fill_color="black", back_color="white").save(qr_path)
+            except ImportError:
+                pass
         except OSError:
             pass
     print("Press Ctrl+C to stop.")

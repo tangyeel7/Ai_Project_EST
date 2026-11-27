@@ -69,7 +69,13 @@ with benchmark_tab:
 
 with phone_tab:
     st.subheader("Evaluate a labeled phone recording")
-    st.markdown("Start `python -m src.live_server`, then open the laptop's printed Wi-Fi address in Android Chrome on your phone. Start and stop sensing there; the labeled CSV is saved in `data/phone_records/`. Each complete three-second window with one consistent label is scored; Unknown rows and windows crossing label changes are skipped.")
+    qr_file = ROOT / "data" / "phone_qr.png"
+    col_info, col_qr = st.columns([3, 1])
+    with col_info:
+        st.markdown("Start `python -m src.live_server` (or run `run_demo.bat`), then scan the QR code or open the laptop's printed Wi-Fi address in Android Chrome on your phone. Start and stop sensing there; the labeled CSV is saved in `data/phone_records/`. Each complete three-second window with one consistent label is scored; Unknown rows and windows crossing label changes are skipped.")
+    with col_qr:
+        if qr_file.exists():
+            st.image(str(qr_file), caption="Scan on same Wi-Fi", width=160)
     uploaded = st.file_uploader("Or upload a phone CSV", type=["csv"], key="phone_csv")
     recording_files = sorted(PHONE_PATH.glob("*.csv")) if PHONE_PATH.exists() else []
     local_path = None

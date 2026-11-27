@@ -4,6 +4,7 @@ __pycache__/
 data/raw/*
 !data/raw/.gitkeep
 data/phone_records/
+data/phone_qr.png
 models/*.npz
 # Pretrained checkpoints are small (<250 KB) and tracked so dashboard/demo works on clone
 !models/*.pt
