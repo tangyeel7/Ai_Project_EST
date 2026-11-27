@@ -8,3 +8,6 @@ models/*.npz
 # Pretrained checkpoints are small (<250 KB) and tracked so dashboard/demo works on clone
 !models/*.pt
 !multi_sensor_comparison/models/*.pt
+docs/LEADERS_GUIDE.md
+docs/LEADERS_VIVA_BANK.md
+report/viva_notes.md
