@@ -47,10 +47,8 @@ DASIG supplies event cues rather than a dense label at every sensor timestamp. A
 
 The CNN learns local motion patterns, and the bidirectional LSTM models their order over time. On the held-out DASIG test group, the current model achieved 97.1% accuracy and 93.7% macro F1. These metrics describe the DASIG event-derived benchmark only. Phone placement, axes, sensors, and sampling differ, so phone results are a separate demo/check and may be lower.
 
-## Leader and code guides
+## Documentation and results
 
-- [Leaders guide](docs/LEADERS_GUIDE.md): project story, terms, dataset, workflow, limitations, and demo plan.
-- [Viva and team question bank](docs/LEADERS_VIVA_BANK.md): likely questions with concise answers and follow-ups.
 - [Code explanations](docs/CODE_EXPLANATION.md): responsibilities and data flow for each project file.
 - [Experiment results](report/experiment_results.md): detailed held-out metrics.
 - [Five-sensor comparison project](multi_sensor_comparison/README.md): compares one forearm sensor with all five DASIG IMUs on matched windows.
