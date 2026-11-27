@@ -1,0 +1,173 @@
+{
+  "dataset": "DASIG v3",
+  "split": {
+    "train_subjects": [
+      "sub003",
+      "sub004",
+      "sub006",
+      "sub007",
+      "sub008",
+      "sub010",
+      "sub013",
+      "sub014",
+      "sub015",
+      "sub017",
+      "sub018",
+      "sub020",
+      "sub021",
+      "sub023",
+      "sub024",
+      "sub025",
+      "sub026",
+      "sub027",
+      "sub028",
+      "sub029",
+      "sub031",
+      "sub033",
+      "sub036",
+      "sub037",
+      "sub039",
+      "sub041",
+      "sub044",
+      "sub045",
+      "sub047",
+      "sub051",
+      "sub053",
+      "sub055",
+      "sub057",
+      "sub058",
+      "sub059",
+      "sub060"
+    ],
+    "validation_subjects": [
+      "sub005",
+      "sub016",
+      "sub030",
+      "sub032",
+      "sub034",
+      "sub038",
+      "sub042",
+      "sub043",
+      "sub049",
+      "sub050",
+      "sub054",
+      "sub056"
+    ],
+    "test_subjects": [
+      "sub001",
+      "sub002",
+      "sub009",
+      "sub011",
+      "sub012",
+      "sub019",
+      "sub022",
+      "sub035",
+      "sub040",
+      "sub046",
+      "sub048",
+      "sub052"
+    ]
+  },
+  "total_windows": 5220,
+  "class_counts": {
+    "Standard pick-and-place": 4524,
+    "Abrupt alarm response": 696
+  },
+  "excluded_incomplete_sensor_trials": [
+    "sub013_LA_L"
+  ],
+  "single_forearm": {
+    "input_channels": 6,
+    "best_epoch": 34,
+    "validation": {
+      "accuracy": 0.9914285714285714,
+      "macro_f1": 0.9812860540506286,
+      "balanced_accuracy": 0.976923076923077,
+      "per_class": [
+        {
+          "Activity": "Standard pick-and-place",
+          "Precision": 0.9934282584884995,
+          "Recall": 0.9967032967032967,
+          "F1": 0.9950630828304992,
+          "Support": 910
+        },
+        {
+          "Activity": "Abrupt alarm response",
+          "Precision": 0.9781021897810219,
+          "Recall": 0.9571428571428572,
+          "F1": 0.9675090252707581,
+          "Support": 140
+        }
+      ]
+    },
+    "test": {
+      "accuracy": 0.9675925925925926,
+      "macro_f1": 0.930093079769714,
+      "balanced_accuracy": 0.9313568376068375,
+      "per_class": [
+        {
+          "Activity": "Standard pick-and-place",
+          "Precision": 0.9818181818181818,
+          "Recall": 0.9807692307692307,
+          "F1": 0.9812934259754142,
+          "Support": 936
+        },
+        {
+          "Activity": "Abrupt alarm response",
+          "Precision": 0.8758620689655172,
+          "Recall": 0.8819444444444444,
+          "F1": 0.8788927335640138,
+          "Support": 144
+        }
+      ]
+    },
+    "latency_ms_per_window": 0.6610044999979436
+  },
+  "five_sensor_fusion": {
+    "input_channels": 30,
+    "best_epoch": 20,
+    "validation": {
+      "accuracy": 0.9695238095238096,
+      "macro_f1": 0.9363559219299309,
+      "balanced_accuracy": 0.9521978021978021,
+      "per_class": [
+        {
+          "Activity": "Standard pick-and-place",
+          "Precision": 0.9888641425389755,
+          "Recall": 0.9758241758241758,
+          "F1": 0.9823008849557523,
+          "Support": 910
+        },
+        {
+          "Activity": "Abrupt alarm response",
+          "Precision": 0.8552631578947368,
+          "Recall": 0.9285714285714286,
+          "F1": 0.8904109589041096,
+          "Support": 140
+        }
+      ]
+    },
+    "test": {
+      "accuracy": 0.937962962962963,
+      "macro_f1": 0.8761448810487633,
+      "balanced_accuracy": 0.9083867521367521,
+      "per_class": [
+        {
+          "Activity": "Standard pick-and-place",
+          "Precision": 0.9790518191841234,
+          "Recall": 0.9487179487179487,
+          "F1": 0.963646228974498,
+          "Support": 936
+        },
+        {
+          "Activity": "Abrupt alarm response",
+          "Precision": 0.7225433526011561,
+          "Recall": 0.8680555555555556,
+          "F1": 0.7886435331230285,
+          "Support": 144
+        }
+      ]
+    },
+    "latency_ms_per_window": 0.7519040000624955
+  }
+}

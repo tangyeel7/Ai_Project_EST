@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+data/raw/*
+!data/raw/.gitkeep
+data/phone_records/
+models/*.npz
+# Pretrained checkpoints are small (<250 KB) and tracked so dashboard/demo works on clone
+!models/*.pt
+!multi_sensor_comparison/models/*.pt

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="theme-color" content="#102127">
+  <title>Project 8 · Phone motion demo</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, sans-serif; background: #0b1519; color: #ecf5f5; }
+    body { max-width: 620px; margin: 0 auto; padding: 20px 16px 36px; }
+    h1 { margin: 5px 0; font-size: 1.6rem; } p { color: #a9bdc2; line-height: 1.45; }
+    .card { background: #13252b; border: 1px solid #274149; border-radius: 16px; padding: 18px; margin: 14px 0; }
+    .label { color: #9db6bc; font-size: .85rem; } #prediction { font-size: 2rem; font-weight: 750; margin: 8px 0; }
+    #status { color: #9db6bc; } button { border: 0; border-radius: 12px; padding: 14px 18px; font-size: 1rem; font-weight: 700; color: #07201e; background: #56e0bd; width: 100%; }
+    button.stop { color: white; background: #bd5362; } .meter { height: 10px; background: #263b42; border-radius: 20px; overflow: hidden; margin: 10px 0 4px; }
+    #confidence { width: 0; height: 100%; background: #56e0bd; transition: width .2s; }
+    #top { display: grid; gap: 8px; } .row { display: flex; justify-content: space-between; color: #d6e4e6; }
+    .notice { font-size: .88rem; } .bad { color: #ffad9f; } .good { color: #75e6b9; }
+    code { color: #c3f4e7; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>Phone motion demo</h1>
+  <p>Hold the phone securely in your hand or strap it to your forearm. Choose what you are about to do, then start. Predictions update from rolling 3-second motion windows.</p>
+  <div class="card">
+    <label for="expected" class="label">WHAT MOVEMENT ARE YOU PERFORMING?</label>
+    <select id="expected" style="display:block;width:100%;margin-top:8px;padding:12px;border-radius:10px;font-size:1rem">
+      <option value="standard">Standard pick-and-place-like movement</option>
+      <option value="abrupt">Abrupt response / quick reach</option>
+      <option value="unknown">Unknown / other movement</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="label">CURRENT MODEL PREDICTION</div>
+    <div id="prediction">Waiting for motion</div>
+    <div id="status">Checking connection…</div>
+    <div class="meter"><div id="confidence"></div></div>
+    <div id="confidenceText" class="label">Confidence appears after the first full window</div>
+  </div>
+  <button id="toggle">Allow motion access and start recording</button>
+  <div class="card">
+    <div class="label">TOP MODEL SCORES</div><div id="top" style="margin-top:12px">No prediction yet</div>
+  </div>
+  <p id="recordStatus" class="notice">Choose the expected movement above. Your recording is saved on the project laptop when you stop.</p>
+  <p class="notice">This is a phone-based demonstration. The model was trained on forearm sensors, so phone position and orientation can change its predictions. Report these results separately from the DASIG benchmark.</p>
+  <p id="secureNote" class="notice bad" hidden>Phone motion sensors require a secure browser context. On Android Chrome, follow the one-time local testing setup in README.md using <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>.</p>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const classesReady = fetch('/api/status').then(r => { if (!r.ok) throw new Error('Could not reach the laptop model server.'); return r.json(); });
+    let active = false, recording = false, samples = [], phoneRows = [], previous = null, nextTime = null, fresh = 0, busy = false;
+    let windowSamples = 150, sampleRate = 50;
+    let recordStart = 0, sessionId = '';
+    const stepMs = 1000 / sampleRate;
+    function setStatus(message, good=false) { $('status').textContent = message; $('status').className = good ? 'good' : ''; }
+    async function start() {
+      try {
+        const ready = await classesReady;
+        windowSamples = ready.window_samples; sampleRate = ready.sample_rate_hz;
+        if (!window.isSecureContext) {
+          $('secureNote').hidden = false;
+          throw new Error('The browser is blocking motion sensors on this local HTTP address. Enable the Android Chrome setup in README.md, then reload.');
+        }
+        if (!('DeviceMotionEvent' in window)) throw new Error('This browser does not expose phone motion sensors. Try Android Chrome.');
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+          const permission = await DeviceMotionEvent.requestPermission();
+          if (permission !== 'granted') throw new Error('Motion sensor permission was not granted.');
+        }
+        samples = []; phoneRows = []; previous = null; nextTime = null; fresh = 0; active = true;
+        recording = true; recordStart = performance.now();
+        sessionId = `phone_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+        window.addEventListener('devicemotion', onMotion);
+        $('toggle').textContent = 'Stop sensing and save recording'; $('toggle').classList.add('stop');
+        $('expected').disabled = false;
+        $('recordStatus').textContent = 'Recording locally on this page. Stop to save the labeled CSV on your laptop.';
+        setStatus(`Connected · ${ready.classes.length} classes · sampling at ${sampleRate} Hz`, true);
+      } catch (e) { setStatus(e.message || String(e)); }
+    }
+    async function stop() {
+      active = false; window.removeEventListener('devicemotion', onMotion);
+      recording = false;
+      $('toggle').disabled = true;
+      $('toggle').textContent = 'Saving recording…'; $('toggle').classList.remove('stop');
+      try {
+        for (let i=0; i<phoneRows.length; i+=500) {
+          const response = await fetch('/api/phone/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,rows:phoneRows.slice(i,i+500)})});
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Could not save recording.');
+        }
+        $('recordStatus').textContent = `Saved ${phoneRows.length} sensor samples to data/phone_records/${sessionId}.csv`;
+        setStatus('Stopped · recording saved on laptop',true);
+      } catch (e) {
+        $('recordStatus').textContent = `Save failed: ${e.message}. Keep this page open and try again.`;
+        setStatus(e.message || String(e));
+      } finally {
+        $('toggle').disabled = false;
+        $('toggle').textContent = 'Start another labeled recording';
+      }
+    }
+    function onMotion(event) {
+      if (!active) return;
+      const a = event.accelerationIncludingGravity || event.acceleration;
+      const r = event.rotationRate;
+      if (!a || !r || [a.x,a.y,a.z,r.alpha,r.beta,r.gamma].some(x => x == null || !Number.isFinite(x))) {
+        setStatus('Sensor axes unavailable in this browser.'); return;
+      }
+      const t = performance.now();
+      // DASIG acceleration is in m/s² and gyroscope in rad/s. Browser rotationRate uses degrees/s;
+      // alpha is the device z-axis, beta x-axis, gamma y-axis.
+      const current = {t, v:[a.x, a.y, a.z,
+        r.beta*Math.PI/180, r.gamma*Math.PI/180, r.alpha*Math.PI/180]};
+      if (!previous) { previous=current; nextTime=t; push(current.v); nextTime += stepMs; return; }
+      const gap = t - previous.t;
+      if (gap > 200) { previous=current; nextTime=t; samples=[]; fresh=0; push(current.v); nextTime+=stepMs; return; }
+      while (nextTime <= t) {
+        const f = Math.max(0, Math.min(1, (nextTime-previous.t)/Math.max(gap,1)));
+        push(previous.v.map((v,i) => v + (current.v[i]-v)*f));
+        nextTime += stepMs;
+      }
+      previous=current;
+      if (samples.length >= windowSamples && fresh >= Math.round(windowSamples/2) && !busy) {
+        fresh=0; infer(samples.slice(-windowSamples));
+      }
+    }
+    function push(v) {
+      samples.push(v); if (samples.length>windowSamples) samples.shift(); fresh++;
+      if (recording) phoneRows.push([(nextTime-recordStart)/1000,$('expected').value,...v]);
+    }
+    async function infer(windowData) {
+      busy=true;
+      try {
+        const response=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({window:windowData})});
+        const result=await response.json(); if(!response.ok) throw new Error(result.error || 'Inference failed.');
+        $('prediction').textContent=result.label;
+        $('confidence').style.width=`${Math.round(result.confidence*100)}%`;
+        $('confidenceText').textContent=`Top score ${(result.confidence*100).toFixed(1)}% · updates every ~${(windowSamples/sampleRate/2).toFixed(1)} seconds`;
+        $('top').innerHTML=result.top.map(v=>`<div class="row"><span>${v.label}</span><span>${(v.probability*100).toFixed(1)}%</span></div>`).join('');
+        setStatus('Live prediction from your phone sensors',true);
+      } catch(e) { setStatus(e.message || String(e)); }
+      finally { busy=false; }
+    }
+    $('toggle').addEventListener('click',()=>active?stop():start());
+    classesReady.then(()=>setStatus('Laptop model connected · tap start to allow sensor access',true))
+      .catch(e=>setStatus(e.message));
+  </script>
+</body>
+</html>
